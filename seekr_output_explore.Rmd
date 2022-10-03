@@ -1,0 +1,196 @@
+---
+title: "Untitled"
+author: "phylobrain"
+date: "15/9/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(stringr)
+library(ggrepel)
+library(dplyr)
+library(ggpubr)
+```
+
+```{r}
+k3<-read.csv("MEG3_vs_lncs_3mers_head.csv")
+k4<-read.csv("MEG3_vs_lncs_4mers_head.csv")
+colnames(k3)[2]<-"Correlation"
+colnames(k4)[2]<-"Correlation"
+k3$kmers<-as.character("3")
+k3<-k3 %>% arrange(desc(Correlation))
+k3<-k3 %>% mutate(percent_rank = as.character(round(percent_rank(Correlation),4)*100))
+k4$kmers<-as.character("4")
+k4<-k4 %>% arrange(desc(Correlation))
+k4<-k4 %>% mutate(percent_rank = as.character(round(percent_rank(Correlation),4)*100))
+plot_table_meg3<-rbind(k3,k4)
+for(i in 1:nrow(plot_table_meg3)){
+  plot_table_meg3[i,"Gene"]<-unlist(str_split(plot_table_meg3[i,"X"], "\\|"))[6]
+  plot_table_meg3[i,"Transcript"]<-unlist(str_split(plot_table_meg3[i,"X"], "\\|"))[5]
+}
+plot_table_meg3$X<-NULL
+plot_table_meg3[grep("MEG3*", plot_table_meg3$Gene),]
+```
+
+```{r}
+highlight_df_meg3 <- plot_table_meg3 %>% group_by(kmers, Gene) %>% dplyr::filter(Gene %in% c("MEG3","EVX1-AS","NEAT1"))%>% top_n(1, wt= Correlation)
+```
+
+```{r}
+p1<-ggplot(plot_table_meg3, aes(y=Correlation, x=kmers))+geom_boxplot()+geom_point(data=highlight_df_meg3, 
+aes(y=Correlation, x=kmers, color= Gene),size=3)+scale_color_manual(values=c("red3","green4","blue4"))+ggtitle("ppMEG3 agains human lncRNAs transcripts")+geom_label_repel(data = highlight_df_meg3, aes(label = paste("%ile",percent_rank)), size = 4.5, nudge_x = 0.1, show.legend = FALSE, colour="black")+geom_text_repel(data = highlight_df_meg3, aes(label = as.character(round(Correlation,2))), nudge_x = -0.2)+ theme(legend.position="bottom") + ylab("Pearson R (SEEKR)")+ guides(color=guide_legend(title="Human Genes"))
+```
+
+
+
+```{r}
+k3<-read.csv("EVX1AS_vs_lncs_3mers_head.csv")
+k4<-read.csv("EVX1AS_vs_lncs_4mers_head.csv")
+colnames(k3)[2]<-"Correlation"
+colnames(k4)[2]<-"Correlation"
+k3$kmers<-as.character("3")
+k3<-k3 %>% arrange(desc(Correlation))
+k3<-k3 %>% mutate(percent_rank = as.character(round(percent_rank(Correlation),4)*100))
+k4$kmers<-as.character("4")
+k4<-k4 %>% arrange(desc(Correlation))
+k4<-k4 %>% mutate(percent_rank = as.character(round(percent_rank(Correlation),4)*100))
+plot_table_evx<-rbind(k3,k4)
+for(i in 1:nrow(plot_table_evx)){
+  plot_table_evx[i,"Gene"]<-unlist(str_split(plot_table_evx[i,"X"], "\\|"))[6]
+  plot_table_evx[i,"Transcript"]<-unlist(str_split(plot_table_evx[i,"X"], "\\|"))[5]
+}
+plot_table_evx$X<-NULL
+plot_table_evx[grep("EVX1-AS", plot_table_evx$Gene),]
+```
+
+```{r}
+plot_table_evx[grep("MEG3", plot_table_evx$Gene),]
+```
+
+
+```{r}
+highlight_df_evx <- plot_table_evx %>% group_by(kmers, Gene) %>% dplyr::filter(Gene %in% c("MEG3","EVX1-AS","NEAT1"))%>% top_n(1, wt= Correlation)
+```
+
+```{r}
+p2<-ggplot(plot_table_evx, aes(y=Correlation, x=kmers))+geom_boxplot()+geom_point(data=highlight_df_evx, 
+aes(y=Correlation, x=kmers, color= Gene),size=3)+scale_color_manual(values=c("red3","green4","blue4"))+ggtitle("ppEVX1-AS agains human lncRNAs transcripts")+geom_label_repel(data = highlight_df_evx, aes(label = paste("%ile",percent_rank)), size = 4.5, nudge_x = 0.1, show.legend = FALSE, colour="black")+geom_text_repel(data = highlight_df_evx, aes(label = as.character(round(Correlation,2))), nudge_x = -0.2)+ theme(legend.position="bottom") + ylab("Pearson R (SEEKR)")+ guides(color=guide_legend(title="Human Genes"))
+```
+
+```{r, fig.height=5}
+ggarrange(p1, p2, labels = c("A","B"), font.label = list(size = 24, color = "black", face = "bold", family = NULL), common.legend = T, legend="bottom")
+```
+
+```{r}
+highlight_df_meg3 <- plot_table_meg3 %>% group_by(kmers, Gene) %>% dplyr::filter(Gene == "MEG3")%>% top_n(1, wt= Correlation)
+p3<-ggplot(plot_table_meg3, aes(y=Correlation, x=kmers))+geom_boxplot()+geom_point(data=highlight_df_meg3, 
+aes(y=Correlation, x=kmers, color= Gene),size=3)+scale_color_manual(values="steelblue4")+ggtitle("Pp-MEG3 lnc isoform against human lncRNAs transcripts")+geom_label_repel(data = highlight_df_meg3, aes(label = paste("%ile",percent_rank)), size = 4.5, nudge_x = 0.2, show.legend = FALSE, colour="black")+geom_text_repel(data = highlight_df_meg3, aes(label = as.character(round(Correlation,2))), nudge_x = -0.2)+ theme(legend.position="bottom") + ylab("Pearson R (SEEKR)")+ guides(color=guide_legend(title="Human Genes"))
+```
+
+```{r}
+highlight_df_evx <- plot_table_evx %>% group_by(kmers, Gene) %>% dplyr::filter(Gene =="EVX1-AS")%>% top_n(1, wt= Correlation)
+p4<-ggplot(plot_table_evx, aes(y=Correlation, x=kmers))+geom_boxplot()+geom_point(data=highlight_df_evx, 
+aes(y=Correlation, x=kmers, color= Gene),size=3)+scale_color_manual(values="tomato3")+ggtitle("Pp-EVX1-AS lnc isoform against human lncRNAs transcripts")+geom_label_repel(data = highlight_df_evx, aes(label = paste("%ile",percent_rank)), size = 4.5, nudge_x = 0.2, show.legend = FALSE, colour="black")+geom_text_repel(data = highlight_df_evx, aes(label = as.character(round(Correlation,2))), nudge_x = -0.2)+ theme(legend.position="bottom") + ylab("Pearson R (SEEKR)")+ guides(color=guide_legend(title="Human Genes"))
+```
+
+```{r, fig.height=3, fig.width=9}
+ggarrange(p3, p4, labels = c("D","E"), font.label = list(size = 24, color = "black", face = "bold", family = NULL), legend="bottom")
+```
+
+
+```{r}
+highlight_df_meg3 <- plot_table_meg3  %>% group_by(kmers, Gene) %>% dplyr::filter(Gene == "MEG3")%>% top_n(1, wt= Correlation)
+p5<-ggplot(plot_table_meg3, aes(y=Correlation, x=kmers))+geom_boxplot()+geom_point(data=highlight_df_meg3, 
+aes(y=Correlation, x=kmers, color= Gene),size=3)+scale_color_manual(values="steelblue4")+ggtitle("All lncRNAs studied compared with SEEKR")+geom_label_repel(data = highlight_df_meg3, aes(label = paste("%ile",percent_rank)), size = 4.5, nudge_x = 0.2, show.legend = FALSE, colour="black")+geom_text_repel(data = highlight_df_meg3, aes(label = as.character(round(Correlation,2))), nudge_x = -0.2)+ theme(legend.position="bottom") + ylab("Pearson R (SEEKR)")+ guides(color=guide_legend(title="Human Genes"))
+```
+
+```{r, fig.height=5}
+ggarrange(p5, p4, labels = c("B","C"), font.label = list(size = 24, color = "black", face = "bold", family = NULL), legend="bottom")
+```
+
+```{r}
+k3<-read.csv("['Parpi0016542.t1 scaffold00000202:483788-498189 len=4596_0']_vs_lncs_3mers.csv")
+k4<-read.csv("['Parpi0016542.t1 scaffold00000202:483788-498189 len=4596_0']_vs_lncs_4mers.csv")
+colnames(k3)[3]<-"Correlation"
+colnames(k4)[3]<-"Correlation"
+colnames(k3)[2]<-"Names"
+colnames(k4)[2]<-"Names"
+k3$kmers<-as.character("3")
+k3<-k3 %>% arrange(desc(Correlation))
+k3<-k3 %>% mutate(percent_rank = as.character(round(percent_rank(Correlation),4)*100))
+k4$kmers<-as.character("4")
+k4<-k4 %>% arrange(desc(Correlation))
+k4<-k4 %>% mutate(percent_rank = as.character(round(percent_rank(Correlation),4)*100))
+plot_table_meg3<-rbind(k3,k4)
+for(i in 1:nrow(plot_table_meg3)){
+  plot_table_meg3[i,"Gene"]<-unlist(str_split(plot_table_meg3[i,"Names"], "\\|"))[6]
+  plot_table_meg3[i,"Transcript"]<-unlist(str_split(plot_table_meg3[i,"Names"], "\\|"))[5]
+}
+plot_table_meg3$X<-NULL
+plot_table_meg3[grep("MEG3*", plot_table_meg3$Gene),]
+```
+
+```{r}
+meg3_save<-plot_table_meg3
+```
+
+
+
+```{r}
+highlight_df_meg3 <- plot_table_meg3  %>% group_by(kmers, Gene) %>% dplyr::filter(Gene == "MEG3")%>% top_n(1, wt= Correlation)
+```
+
+```{r}
+p1<-ggplot(plot_table_meg3, aes(y=Correlation, x=kmers))+geom_boxplot()+geom_point(data=highlight_df_meg3, 
+aes(y=Correlation, x=kmers, color= Gene),size=3)+scale_color_manual(values=c("steelblue4"))+ggtitle("Pp-MEG3 against human lncRNAs transcripts")+geom_label_repel(data = highlight_df_meg3, aes(label = paste("%ile",percent_rank)), size = 4.5, nudge_x = 0.1, show.legend = FALSE, colour="black")+geom_text_repel(data = highlight_df_meg3, aes(label = as.character(round(Correlation,2))), nudge_x = -0.2)+ theme(legend.position="bottom") + ylab("Pearson R (SEEKR)")+ guides(color=guide_legend(title="Human Genes"))
+```
+
+
+
+```{r}
+k3<-read.csv("['Parpi0020455.t1 scaffold00000356:23500-89135 len=5421_0']_vs_lncs_3mers.csv")
+k4<-read.csv("['Parpi0020455.t1 scaffold00000356:23500-89135 len=5421_0']_vs_lncs_4mers.csv")
+colnames(k3)[3]<-"Correlation"
+colnames(k4)[3]<-"Correlation"
+colnames(k3)[2]<-"Names"
+colnames(k4)[2]<-"Names"
+k3$kmers<-as.character("3")
+k3<-k3 %>% arrange(desc(Correlation))
+k3<-k3 %>% mutate(percent_rank = as.character(round(percent_rank(Correlation),4)*100))
+k4$kmers<-as.character("4")
+k4<-k4 %>% arrange(desc(Correlation))
+k4<-k4 %>% mutate(percent_rank = as.character(round(percent_rank(Correlation),4)*100))
+plot_table_evx<-rbind(k3,k4)
+for(i in 1:nrow(plot_table_evx)){
+  plot_table_evx[i,"Gene"]<-unlist(str_split(plot_table_evx[i,"Names"], "\\|"))[6]
+  plot_table_evx[i,"Transcript"]<-unlist(str_split(plot_table_evx[i,"Names"], "\\|"))[5]
+}
+plot_table_evx$X<-NULL
+plot_table_evx[grep("EVX1-AS", plot_table_evx$Gene),]
+```
+
+```{r}
+plot_table_evx[grep("MEG3", plot_table_evx$Gene),]
+```
+
+
+```{r}
+highlight_df_evx <- plot_table_evx %>% group_by(kmers, Gene) %>% dplyr::filter(Gene == "EVX1-AS")%>% top_n(1, wt= Correlation)
+```
+
+```{r}
+p2<-ggplot(plot_table_evx, aes(y=Correlation, x=kmers))+geom_boxplot()+geom_point(data=highlight_df_evx, 
+aes(y=Correlation, x=kmers, color= Gene),size=3)+scale_color_manual(values=c("tomato3"))+ggtitle("Pp-EVX1-AS against human lncRNAs transcripts")+geom_label_repel(data = highlight_df_evx, aes(label = paste("%ile",percent_rank)), size = 4.5, nudge_x = 0.1, show.legend = FALSE, colour="black")+geom_text_repel(data = highlight_df_evx, aes(label = as.character(round(Correlation,2))), nudge_x = -0.2)+ theme(legend.position="bottom") + ylab("Pearson R (SEEKR)")+ guides(color=guide_legend(title="Human Genes"))
+```
+
+
+
+```{r, fig.height=3, fig.width=9}
+ggarrange(p1, p2, labels = c("B","C"), font.label = list(size = 24, color = "black", face = "bold", family = NULL), common.legend = F, legend="bottom")
+```
+
+
+
+
