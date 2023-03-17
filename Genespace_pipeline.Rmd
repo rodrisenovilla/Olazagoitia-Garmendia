@@ -1,0 +1,90 @@
+---
+title: "GENESPACE Notebook"
+output: html_notebook
+---
+
+
+
+```{r}
+library(GENESPACE)
+library(Biostrings)
+library(rtracklayer)
+```
+
+#Vignette Detailed
+
+https://htmlpreview.github.io/?https://github.com/jtlovell/GENESPACE/blob/master/doc/genespaceOverview.html
+
+```{r}
+###############################################
+# -- change paths to those valid on your system
+genomeRepo <- "~/bioinfo/ane/rev_commsbio/GenespaceGecko/rawGenomes"
+wd <- "~/bioinfo/ane/rev_commsbio/GenespaceHumanPpicta"
+path2mcscanx <- "/opt/MCScanX"
+path2orthofinder <-"/opt/OrthoFinder/orthofinder"
+path2diamond <- "/opt/OrthoFinder/bin/diamond"
+###############################################
+```
+
+```{r}
+# -- download raw data from NCBI for human and chicken genomes
+dir.create(genomeRepo)
+rawFiles <- download_exampleData(filepath = genomeRepo)
+```
+
+The GTF files have to be differently parsed, so different parameters must be run for each file.
+As the function is thought for both species, two files would be generated, but we will delete the non-useful. 
+
+```{r}
+#human
+# -- parse the annotations to fastas with headers that match a gene bed file
+parsedPaths <- parse_annotations(
+  rawGenomeRepo = genomeRepo,
+  genomeDirs = c("human", "gecko"),
+  genomeIDs = c("human", "gecko"),
+  presets = "ncbi",
+  genespaceWd = wd, 
+  overwrite = F)
+```
+This will not work for gecko, as the annotation is not carried out with NCBI standards.
+
+```{r}
+#gecko
+parse_annotations(
+  rawGenomeRepo = genomeRepo,
+  genomeDirs = c("human", "gecko"),
+  genomeIDs = c("human", "gecko"), 
+  gffIdColumn = "ID",
+  gffStripText = "ID=", 
+  headerEntryIndex = 1,
+  headerSep = " ", 
+  headerStripText = "ID=",
+  genespaceWd = wd)
+```
+This will only work for gecko, not for human.
+
+We must select the files of interest for each species: Human, BED file resulting from the first command; Gecko, the second BED file.
+Delete the ones that are not useful. 
+
+```{r}
+# -- initalize the run and QC the inputs
+gpar <- init_genespace(
+  wd = wd, 
+  path2mcscanx = path2mcscanx,
+  path2orthofinder = path2orthofinder,
+  path2diamond = path2diamond)
+
+# -- accomplish the run
+out <- run_genespace(gpar, overwrite = T)
+```
+
+#Identification of EVX1 orthologues
+
+```{r}
+test <- query_pangenes(
+  gsParam = out, refGenome = "gecko")
+test[grep("pp.47247", test$repGene),]
+test[grep("EVX1", test$repGene),]$gecko
+test[grep("EVX1", test$repGene),]$human
+```
+
