@@ -1,0 +1,131 @@
+---
+title: "Untitled"
+author: "phylobrain"
+date: "15/9/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(stringr)
+library(ggrepel)
+library(dplyr)
+library(ggpubr)
+```
+
+```{r}
+k3<-read.csv("MEG3-k3-tr.csv", sep = ";")
+k4<-read.csv("MEG3-k4-tr.csv", sep = ";")
+k5<-read.csv("MEG3_vs_lncs_5mers.csv", sep = ",")
+k6<-read.csv("MEG3_vs_lncs_6mers.csv", sep = ",")
+colnames(k3)[2]<-"Correlation"
+colnames(k4)[2]<-"Correlation"
+colnames(k5)[2]<-"Correlation"
+colnames(k6)[2]<-"Correlation"
+k3$kmers<-as.character("3")
+k3<-k3 %>% arrange(desc(Correlation))
+k3<-k3 %>% mutate(percent_rank = as.character(round(percent_rank(Correlation),4)*100))
+k4$kmers<-as.character("4")
+k4<-k4 %>% arrange(desc(Correlation))
+k4<-k4 %>% mutate(percent_rank = as.character(round(percent_rank(Correlation),4)*100))
+k5$kmers<-as.character("5")
+k5<-k5 %>% arrange(desc(Correlation))
+k5<-k5 %>% mutate(percent_rank = as.character(round(percent_rank(Correlation),4)*100))
+k6$kmers<-as.character("6")
+k6<-k6 %>% arrange(desc(Correlation))
+k6<-k6 %>% mutate(percent_rank = as.character(round(percent_rank(Correlation),4)*100))
+plot_table_meg3_k34<-rbind(k3,k4)
+for(i in 1:nrow(plot_table_meg3_k34)){
+  plot_table_meg3_k34[i,"Gene"]<-str_sub(plot_table_meg3_k34[i,1], 2, 16)
+}
+plot_table_meg3_k56<-rbind(k5,k6)
+for(i in 1:nrow(plot_table_meg3_k56)){
+  plot_table_meg3_k56[i,"Gene"]<-str_sub(plot_table_meg3_k56[i,1], 1, 15)
+}
+plot_table_meg3<-rbind(plot_table_meg3_k34,plot_table_meg3_k56)
+plot_table_meg3$X<-NULL
+plot_table_meg3<-plot_table_meg3[,c(4,1,3,2)]
+#plot_table_meg3[grep("Parpi0016542.t1", plot_table_meg3$Gene),]
+```
+
+
+```{r}
+highlight_df_meg3 <- plot_table_meg3 %>% group_by(kmers, Correlation) %>% dplyr::filter(Gene %in% c("Parpi0016542.t1")) %>% top_n(1, wt= Correlation)
+```
+
+```{r}
+k3<-read.csv("Evx1as-k3-tr.csv", sep = ";")
+k3$X.1<-NULL
+k4<-read.csv("Evx1as-k4-tr.csv", sep = ";")
+k5<-read.csv("EVX1AS_vs_lncs_5mers.csv", sep = ",")
+k6<-read.csv("EVX1AS_vs_lncs_6mers.csv", sep = ",")
+colnames(k3)[2]<-"Correlation"
+colnames(k4)[2]<-"Correlation"
+colnames(k5)[2]<-"Correlation"
+colnames(k6)[2]<-"Correlation"
+k3$kmers<-as.character("3")
+k3<-k3 %>% arrange(desc(Correlation))
+k3<-k3 %>% mutate(percent_rank = as.character(round(percent_rank(Correlation),4)*100))
+k4$kmers<-as.character("4")
+k4<-k4 %>% arrange(desc(Correlation))
+k4<-k4 %>% mutate(percent_rank = as.character(round(percent_rank(Correlation),4)*100))
+k5$kmers<-as.character("5")
+k5<-k5 %>% arrange(desc(Correlation))
+k5<-k5 %>% mutate(percent_rank = as.character(round(percent_rank(Correlation),4)*100))
+k6$kmers<-as.character("6")
+k6<-k6 %>% arrange(desc(Correlation))
+k6<-k6 %>% mutate(percent_rank = as.character(round(percent_rank(Correlation),4)*100))
+plot_table_evx1as_k34<-rbind(k3,k4)
+for(i in 1:nrow(plot_table_evx1as_k34)){
+  plot_table_evx1as_k34[i,"Gene"]<-str_sub(plot_table_evx1as_k34[i,1], 2, 16)
+}
+plot_table_evx1as_k56<-rbind(k5,k6)
+for(i in 1:nrow(plot_table_evx1as_k56)){
+  plot_table_evx1as_k56[i,"Gene"]<-str_sub(plot_table_evx1as_k56[i,1], 1, 15)
+}
+plot_table_evx1as<-rbind(plot_table_evx1as_k34,plot_table_evx1as_k56)
+plot_table_evx1as$X<-NULL
+plot_table_evx1as<-plot_table_evx1as[,c(4,1,3,2)]
+plot_table_evx1as<-plot_table_evx1as %>% arrange(Correlation)
+```
+
+```{r}
+highlight_df_evx <- plot_table_evx1as %>% group_by(kmers, Correlation) %>% dplyr::filter(Gene %in% c("Parpi0020455.t1")) %>% top_n(1, wt= Correlation)
+```
+
+```{r}
+#MEG3
+p1<-ggplot(plot_table_meg3, aes(y=Correlation, x=kmers))+geom_boxplot()+geom_point(data=highlight_df_meg3, 
+aes(y=Correlation, x=kmers, color= Gene),size=3)+scale_color_manual(values=c("steelblue4"))+ggtitle("Hs-MEG3 against gecko genes")+geom_label_repel(data = highlight_df_meg3, aes(label = paste("%ile",percent_rank)), size = 4.5, nudge_x = 0.1, show.legend = FALSE, colour="black")+geom_text_repel(data = highlight_df_meg3, aes(label = as.character(round(Correlation,2))), nudge_x = -0.2)+ theme(legend.position="bottom") + ylab("Pearson R (SEEKR)")+ guides(color=guide_legend(title="Gecko Genes"))
+#EVX1AS
+p2<-ggplot(plot_table_evx1as, aes(y=Correlation, x=kmers))+geom_boxplot()+geom_point(data=highlight_df_evx, 
+aes(y=Correlation, x=kmers, color= Gene),size=3)+scale_color_manual(values=c("tomato3"))+ggtitle("Hs-EVX1AS against gecko genes")+geom_label_repel(data = highlight_df_evx, aes(label = paste("%ile",percent_rank)), size = 4.5, nudge_x = 0.1, show.legend = FALSE, colour="black")+geom_text_repel(data = highlight_df_evx, aes(label = as.character(round(Correlation,2))), nudge_x = -0.2)+ theme(legend.position="bottom") + ylab("Pearson R (SEEKR)")+ guides(color=guide_legend(title="Gecko Genes"))
+```
+
+```{r,  fig.height=3, fig.width=9}
+ggarrange(p1, p2, font.label = list(size = 24, color = "black", face = "bold", family = NULL), common.legend = F, legend="bottom")
+```
+
+```{r}
+table<- plot_table_evx1as %>% dplyr::filter(kmers == 3) %>% arrange(desc(Correlation))
+all <- table[1:which(table$Gene == "Parpi0020455.t1"),"Gene"]
+for(i in 2:length(unique(plot_table_evx1as$kmers))){
+  k<-unique(plot_table_evx1as$kmers)[i]
+  table<- plot_table_evx1as %>% dplyr::filter(kmers == k) %>% arrange(desc(Correlation))
+  txs <- table[1:which(table$Gene == "Parpi0020455.t1"),"Gene"]
+  all<- intersect(all, txs)
+}
+all
+```
+```{r}
+table<- plot_table_meg3 %>% dplyr::filter(kmers == 3) %>% arrange(desc(Correlation))
+all <- table[1:which(table$Gene == "Parpi0016542.t1"),"Gene"]
+for(i in 2:length(unique(plot_table_meg3$kmers))){
+  k<-unique(plot_table_meg3$kmers)[i]
+  table<- plot_table_meg3 %>% dplyr::filter(kmers == k) %>% arrange(desc(Correlation))
+  txs <- table[1:which(table$Gene == "Parpi0016542.t1"),"Gene"]
+  all<- intersect(all, txs)
+}
+all
+```
